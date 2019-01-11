@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}
+login index
+{% endblock %}
+
+
+{% block top_import %}
+<link type="text/css" rel="stylesheet" href="/static/slide_code/style.css">
+<script src="/static/bower_components/jquery/jquery.min.js"></script>
+<script src="/static/js/blueimp-md5.min.js"></script>
+
+<script src="/static/slide_code/img_ver.js"></script>
+
+<style>
+    .logo-box {
+        border: 1px solid #e5e5e5;
+        border-radius: 4px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .input-prepend {
+        padding-top: 20px;
+    }
+
+    #box {
+        margin-top: 70px;
+    }
+
+
+
+    .verBox {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        left: 404px;
+        top: 0;
+        opacity: 0;
+        transition: all 0.8s;
+        padding-top: 170px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ch-container">
+    <div class="row" id="box">
+
+        <div class="row">
+            <div class="col-md-12 center login-header">
+                <h2>Welcome to EAMS</h2>
+            </div>
+            <!--/span-->
+        </div><!--/row-->
+
+        <div class="row">
+            <div class="well col-md-5 center login-box logo-box login">
+                <div id="tips" class="alert alert-info">
+                    请输入正确的用户名和密码登录.
+                </div>
+                <!--<form class="form-horizontal" action="index.html" method="post">-->
+                <fieldset>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-user red"></i></span>
+                        <input id="username" type="text" class="form-control" placeholder="用户名">
+                    </div>
+                    <!--<div class="clearfix"></div>-->
+                    <br>
+
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-lock red"></i></span>
+                        <input id="password" type="password" class="form-control" placeholder="密码">
+                    </div>
+                    <!--<div class="clearfix"></div>-->
+
+
+                    <div class="input-prepend">
+                        <p class="center col-md-5">
+                            <button id="login-btn" type="submit" class="btn btn-primary">Login</button>
+                        </p>
+                        <label class="remember" for="remember"><input type="checkbox" id="remember"> Remember me</label>
+                    </div>
+                    <!--<div class="clearfix"></div>-->
+
+                </fieldset>
+                <!--</form>-->
+            </div>
+            <!--/span-->
+        </div><!--/row-->
+    </div><!--/fluid-row-->
+
+</div><!--/.fluid-container-->
+
+
+<div class="verBox">
+    <div id="imgVer" style="display:inline-block;"></div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+    imgVer({
+        el: '$("#imgVer")',
+        queryParams: function () {
+            var ppp = {}
+            $.ajax({
+                url: "/manager/login-slide-code",
+                type: 'GET',
+                dataType: 'JSON',
+                async: false,
+                success: function (response) {
+                    ppp = response
+
+                },
+                error: function () {
+                }
+            });
+            return ppp
+
+        },
+        success: function (coordX,coordY) {
+            var password = md5("curd" + $("#password").val() + "rbac")
+            $.ajax({
+                url: "/manager/verify-login",
+                type: 'POST',
+                data: {
+                    'username': $("#username").val(),
+                    'password': password,
+                    'coordX': coordX,
+                    'coordY': coordY
+                },
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response["status"] === 200) {
+                        window.location.href = "/manager/index"
+                    } else {
+                        $(".login").css({
+                            "left": "0",
+                            "opacity": "1"
+                        });
+                        $(".verBox").css({
+                            "left": "404px",
+                            "opacity": "0"
+                        });
+                        $("#tips").removeClass("alert-info").addClass("alert-danger");
+                        $("#tips").text(response["msg"])
+                    }
+                },
+                error: function (response) {
+                    $(".login").css({
+                        "left": "0",
+                        "opacity": "1"
+                    });
+                    $(".verBox").css({
+                        "left": "404px",
+                        "opacity": "0"
+                    });
+                    $("#tips").removeClass("alert-info").addClass("alert-danger");
+                    if (response["status"] === 500) {
+                        $("#tips").text("请求异常错误, 请稍后重试. ");
+                        return
+                    }
+
+                    $("#tips").text(response["msg"])
+                }
+            })
+        },
+        error: function () {
+            //alert('错误什么都不执行')
+        }
+    });
+
+    $("#login-btn").on('click', function () {
+        if ($("#username").val() === '') {
+            $("#tips").removeClass("alert-info").addClass("alert-danger");
+            $("#tips").text('用户名不能为空, 请正确输入.');
+        } else if ($("#password").val() === '') {
+            $("#tips").removeClass("alert-info").addClass("alert-danger");
+
+            $("#tips").text('登录密码不能为空, 请正确输入.')
+        } else {
+            $("#tips").removeClass("alert-danger").addClass("alert-info");
+
+            $(".login").css({
+                "left": "-404px",
+                "opacity": "0"
+            });
+            $(".verBox").css({
+                "left": "0",
+                "opacity": "1"
+            });
+
+        }
+
+    })
+</script>
+{% endblock %}
